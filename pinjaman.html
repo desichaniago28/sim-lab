@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIM-LABKOM | Sistem Peminjaman Inventaris Lab Komputer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast-enter {
+            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white">
+
+    <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- ==================== CUSTOM CONFIRMATION MODAL ==================== -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
+            <div class="flex items-center gap-3 text-amber-600 mb-3">
+                <div class="p-2.5 bg-amber-50 rounded-xl">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <h3 id="confirm-title" class="text-lg font-bold text-slate-900">Konfirmasi Tindakan</h3>
+            </div>
+            <p id="confirm-message" class="text-slate-600 text-sm leading-relaxed mb-6">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
+            <div class="flex justify-end gap-3">
+                <button id="confirm-cancel-btn" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition">Batal</button>
+                <button id="confirm-ok-btn" class="px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 1. HALAMAN LOGIN TERPADU ==================== -->
+    <div id="login-view" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900">
+        <div class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 border border-white/10">
+            
+            <!-- Left Panel: Branding & Demo Guide -->
+            <div class="lg:col-span-5 bg-indigo-900 text-white p-8 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute -right-16 -top-16 w-64 h-64 bg-indigo-700/30 rounded-full blur-2xl"></div>
+                <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-blue-500/20 rounded-full blur-2xl"></div>
+                
+                <div class="relative z-10">
+                    <div class="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/15 mb-6">
+                        <i data-lucide="cpu" class="w-5 h-5 text-indigo-300"></i>
+                        <span class="text-xs font-semibold tracking-wider uppercase text-indigo-100">Laboratorium Komputer</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mb-3">SIM-LABKOM</h1>
+                    <p class="text-indigo-200 text-sm leading-relaxed">
+                        Sistem Informasi Peminjaman & Manajemen Inventaris Perangkat Keras Laboratorium Komputer.
+                    </p>
+                </div>
+
+                <!-- Demo Helper Card -->
+                <div class="relative z-10 mt-8 bg-indigo-950/70 backdrop-blur-md border border-indigo-400/20 rounded-2xl p-4">
+                    <div class="flex items-center gap-2 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span>Akses Cepat Pengujian (Demo)</span>
+                    </div>
+                    <p class="text-xs text-indigo-200 mb-3">Klik tombol di bawah untuk mengisi otomatis akun simulasi:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="autofillDemo('user')" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition shadow-sm">
+                            <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+                            Demo User
+                        </button>
+                        <button type="button" onclick="autofillDemo('admin')" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition shadow-sm">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                            Demo Admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Login Tabs & Forms -->
+            <div class="lg:col-span-7 p-8 sm:p-10 flex flex-col justify-center bg-white">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900">Selamat Datang</h2>
+                    <p class="text-sm text-slate-500 mt-1">Silakan pilih peran akses Anda untuk masuk ke dalam sistem.</p>
+                </div>
+
+                <!-- Role Switcher Tabs -->
+                <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl mb-6">
+                    <button type="button" id="tab-btn-user" onclick="switchLoginTab('user')" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold bg-white text-indigo-900 shadow-sm transition">
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                        Siswa / Guru / Peneliti
+                    </button>
+                    <button type="button" id="tab-btn-admin" onclick="switchLoginTab('admin')" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 transition">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        Admin / Laboran
+                    </button>
+                </div>
+
+                <!-- Form Login USER -->
+                <form id="form-login-user" onsubmit="handleUserLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">NIS / NIP</label>
+                        <div class="relative">
+                            <i data-lucide="id-card" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                            <input type="text" id="login-user-nim" required placeholder="Contoh: 221402088" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Nama Lengkap</label>
+                        <div class="relative">
+                            <i data-lucide="user-check" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                            <input type="text" id="login-user-name" required placeholder="Masukkan nama lengkap Anda" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Kata Sandi Portal</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                            <input type="password" id="login-user-pass" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition">
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1">*Untuk simulasi demo, kata sandi bebas diisi (min. 4 karakter).</p>
+                    </div>
+                    <button type="submit" class="w-full py-3 px-4 bg-indigo-900 hover:bg-indigo-800 text-white font-semibold rounded-xl text-sm shadow-lg shadow-indigo-900/20 flex items-center justify-center gap-2 transition mt-2">
+                        <span>Masuk Sebagai Peminjam</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </form>
+
+                <!-- Form Login ADMIN -->
+                <form id="form-login-admin" onsubmit="handleAdminLogin(event)" class="space-y-4 hidden">
+                    <div class="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-xs text-amber-800 flex items-start gap-2.5">
+                        <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="font-semibold">Kredensial Admin Default:</span><br>
+                            Username: <code class="bg-amber-100 px-1.5 py-0.5 rounded font-bold">admin</code> | Password: <code class="bg-amber-100 px-1.5 py-0.5 rounded font-bold">admin123</code>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Username Laboran</label>
+                        <div class="relative">
+                            <i data-lucide="shield-alert" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                            <input type="text" id="login-admin-user" required placeholder="admin" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Kata Sandi Admin</label>
+                        <div class="relative">
+                            <i data-lucide="key-round" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                            <input type="password" id="login-admin-pass" required placeholder="admin123" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm shadow-lg shadow-slate-900/20 flex items-center justify-center gap-2 transition mt-2">
+                        <span>Masuk Dashboard Laboran</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 2. APLIKASI UTAMA (USER & ADMIN) ==================== -->
+    <div id="app-shell" class="hidden flex-col min-h-screen">
+        
+        <!-- Top Navigation Bar -->
+        <header class="bg-indigo-950 text-white sticky top-0 z-30 shadow-md border-b border-indigo-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-600 rounded-xl shadow-inner">
+                        <i data-lucide="cpu" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-base sm:text-lg tracking-tight block leading-none">SIM-LABKOM</span>
+                        <span id="nav-role-badge" class="text-[11px] text-indigo-300 font-medium">Portal Peminjaman Alat</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <!-- Reset Demo Data Button -->
+                    <button onclick="confirmResetDemo()" title="Kembalikan data awal demo" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-900/80 hover:bg-indigo-800 text-indigo-200 hover:text-white text-xs font-medium border border-indigo-700/60 transition">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Reset Data Demo</span>
+                    </button>
+
+                    <!-- User Profile Info -->
+                    <div class="hidden md:flex items-center gap-2.5 pl-3 border-l border-indigo-800">
+                        <div class="w-8 h-8 rounded-full bg-indigo-700 flex items-center justify-center text-xs font-bold uppercase" id="nav-avatar">U</div>
+                        <div class="text-xs">
+                            <p id="nav-username" class="font-semibold text-white leading-tight">Nama Pengguna</p>
+                            <p id="nav-userid" class="text-indigo-300 text-[11px]">NIS / Role</p>
+                        </div>
+                    </div>
+
+                    <!-- Logout Button -->
+                    <button onclick="handleLogout()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-semibold transition shadow-sm">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        <span>Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ==================== VIEW A: ROLE USER (PEMINJAM) ==================== -->
+        <main id="user-dashboard-view" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <!-- Welcome Banner -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold mb-2">
+                        <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Mode Peminjam (Siswa / Guru / Peneliti)
+                    </span>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Halo, <span id="user-welcome-name">Mahasiswa</span>!</h1>
+                    <p class="text-sm text-slate-500 mt-0.5">Silakan lengkapi biodata dan formulir pengajuan peminjaman perangkat laboratorium di bawah ini.</p>
+                </div>
+                <div class="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-xl border border-slate-200/70">
+                    <div class="p-2 bg-indigo-100 text-indigo-700 rounded-lg">
+                        <i data-lucide="package-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500">Total Pengajuan Anda</p>
+                        <p id="user-total-loans-count" class="text-lg font-bold text-slate-900">0 Transaksi</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Kolom Kiri: Form Biodata & Peminjaman (5 Kolom) -->
+                <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="bg-indigo-900 px-6 py-4 text-white flex items-center gap-2.5">
+                        <i data-lucide="file-plus-2" class="w-5 h-5 text-indigo-300"></i>
+                        <h2 class="font-semibold text-base">Formulir Biodata & Peminjaman</h2>
+                    </div>
+                    
+                    <form id="user-loan-form" onsubmit="submitUserLoan(event)" class="p-6 space-y-4">
+                        <div class="border-b border-slate-100 pb-3">
+                            <p class="text-xs font-bold uppercase tracking-wider text-indigo-900 mb-3">1. Biodata Peminjam</p>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Nama Lengkap *</label>
+                                    <input type="text" id="loan-nama" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none">
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">NIS / NIP *</label>
+                                        <input type="text" id="loan-nim" required readonly class="w-full px-3.5 py-2 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl text-sm cursor-not-allowed">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">No. WhatsApp / HP *</label>
+                                        <input type="tel" id="loan-wa" required placeholder="0812xxxxxxxx" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Program Studi / Unit Kerja *</label>
+                                    <select id="loan-prodi" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none">
+                                        <option value="">-- Pilih Program Studi --</option>
+                                        <option value="Teknik Komputer Jaringan dan Telekomunikasi">Teknik Komputer Jaringan dan Telekomunikasi</option>
+                                        <option value="Pengembangan Perangkat Lunak dan Gim">Pengembangan Perangkat Lunak dan Gim</option>
+                                        <option value="uru / Peneliti Lab">Guru / Peneliti Lab</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-indigo-900 mb-3">2. Detail Perangkat & Jadwal</p>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Pilih Alat Inventaris Lab *</label>
+                                    <select id="loan-item-select" onchange="updateMaxQtyHint()" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none">
+                                        <!-- Populated via JS -->
+                                    </select>
+                                    <p id="loan-stock-hint" class="text-[11px] text-indigo-600 font-medium mt-1">Pilih alat untuk melihat ketersediaan stok.</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Jumlah Unit Dipinjam *</label>
+                                    <input type="number" id="loan-qty" min="1" value="1" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none">
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Tanggal Pinjam *</label>
+                                        <input type="date" id="loan-date-start" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Rencana Kembali *</label>
+                                        <input type="date" id="loan-date-end" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Keperluan Peminjaman *</label>
+                                    <textarea id="loan-purpose" rows="2" required placeholder="Contoh: Praktikum Jaringan Komputer / Penelitian Tugas Akhir" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 px-4 bg-indigo-900 hover:bg-indigo-800 text-white font-semibold rounded-xl text-sm shadow-md flex items-center justify-center gap-2 transition">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            <span>Ajukan Peminjaman Alat</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Kolom Kanan: Riwayat Peminjaman Saya (7 Kolom) -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- Info Stok Tersedia Ringkas -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="monitor-smartphone" class="w-5 h-5 text-indigo-700"></i>
+                                <h3 class="font-bold text-slate-900">Katalog Alat Lab Tersedia</h3>
+                            </div>
+                            <span class="text-xs text-slate-500">Real-time stok gudang lab</span>
+                        </div>
+                        <div id="user-catalog-preview" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Tabel Riwayat Peminjaman User -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="history" class="w-5 h-5 text-indigo-700"></i>
+                                <h3 class="font-bold text-slate-900">Riwayat & Status Peminjaman Saya</h3>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                        <th class="py-3.5 px-4">ID & Alat</th>
+                                        <th class="py-3.5 px-4">Jml</th>
+                                        <th class="py-3.5 px-4">Jadwal</th>
+                                        <th class="py-3.5 px-4">Keperluan</th>
+                                        <th class="py-3.5 px-4">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="user-loans-tbody" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- ==================== VIEW B: ROLE ADMIN (LABORAN) ==================== -->
+        <main id="admin-dashboard-view" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <!-- Dashboard Summary Statistics -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                    <div class="p-3 bg-indigo-50 text-indigo-700 rounded-xl">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Total Jenis Alat</p>
+                        <p id="stat-total-types" class="text-2xl font-bold text-slate-900">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                    <div class="p-3 bg-emerald-50 text-emerald-700 rounded-xl">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Total Unit Tersedia</p>
+                        <p id="stat-total-units" class="text-2xl font-bold text-slate-900">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                    <div class="p-3 bg-blue-50 text-blue-700 rounded-xl">
+                        <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Sedang Dipinjam</p>
+                        <p id="stat-active-loans" class="text-2xl font-bold text-slate-900">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                        <i data-lucide="clock" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Menunggu Persetujuan</p>
+                        <p id="stat-pending-loans" class="text-2xl font-bold text-slate-900">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Module Navigation Tabs -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div class="inline-flex p-1.5 bg-slate-200/70 rounded-2xl">
+                    <button id="admin-tab-loans" onclick="switchAdminTab('loans')" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-white text-indigo-950 shadow-sm transition">
+                        <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                        <span>Data Peminjaman</span>
+                        <span id="badge-pending-count" class="ml-1 px-2 py-0.5 text-[11px] bg-amber-500 text-white rounded-full hidden">0</span>
+                    </button>
+                    <button id="admin-tab-inventory" onclick="switchAdminTab('inventory')" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 transition">
+                        <i data-lucide="hard-drive" class="w-4 h-4"></i>
+                        <span>Inventaris Alat Lab</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ==================== ADMIN MODULE 1: MANAJEMEN PEMINJAMAN ==================== -->
+            <section id="admin-section-loans" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Manajemen Transaksi Peminjaman</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Kelola persetujuan, pengembalian alat, pencarian, maupun input manual peminjaman.</p>
+                    </div>
+                    <button onclick="openLoanModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 text-white text-sm font-semibold rounded-xl shadow-sm transition">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Tambah Peminjaman Manual</span>
+                    </button>
+                </div>
+
+                <!-- Search & Filter Bar Peminjaman -->
+                <div class="p-4 bg-slate-50 border-b border-slate-200/70 grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div class="sm:col-span-8 relative">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                        <input type="text" id="admin-search-loans" oninput="renderAdminLoans()" placeholder="Cari berdasarkan nama peminjam, NIM, nama alat, atau ID transaksi..." class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                    <div class="sm:col-span-4">
+                        <select id="admin-filter-loan-status" onchange="renderAdminLoans()" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                            <option value="ALL">Semua Status Peminjaman</option>
+                            <option value="Menunggu Persetujuan">Menunggu Persetujuan</option>
+                            <option value="Disetujui">Disetujui / Dipinjam</option>
+                            <option value="Dikembalikan">Dikembalikan</option>
+                            <option value="Ditolak">Ditolak</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table Peminjaman -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                <th class="py-3.5 px-4">ID & Tanggal</th>
+                                <th class="py-3.5 px-4">Peminjam</th>
+                                <th class="py-3.5 px-4">Alat & Jumlah</th>
+                                <th class="py-3.5 px-4">Periode & Keperluan</th>
+                                <th class="py-3.5 px-4">Status</th>
+                                <th class="py-3.5 px-4 text-right">Aksi Pengelola</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-loans-tbody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ==================== ADMIN MODULE 2: MANAJEMEN INVENTARIS ==================== -->
+            <section id="admin-section-inventory" class="hidden bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Master Data Inventaris Alat Lab</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Tambah perangkat baru, perbarui stok, kondisi fisik, atau hapus inventaris.</p>
+                    </div>
+                    <button onclick="openInventoryModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 text-white text-sm font-semibold rounded-xl shadow-sm transition">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Tambah Alat Baru</span>
+                    </button>
+                </div>
+
+                <!-- Search & Filter Bar Inventaris -->
+                <div class="p-4 bg-slate-50 border-b border-slate-200/70 grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div class="sm:col-span-8 relative">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                        <input type="text" id="admin-search-inv" oninput="renderAdminInventory()" placeholder="Cari kode alat, nama perangkat, atau kategori..." class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                    <div class="sm:col-span-4">
+                        <select id="admin-filter-inv-cat" onchange="renderAdminInventory()" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                            <option value="ALL">Semua Kategori</option>
+                            <option value="PC / Laptop">PC / Laptop</option>
+                            <option value="Jaringan">Jaringan</option>
+                            <option value="Periferal">Periferal</option>
+                            <option value="Multimedia">Multimedia</option>
+                            <option value="IoT / Mikrokontroler">IoT / Mikrokontroler</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table Inventaris -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                <th class="py-3.5 px-4">Kode Alat</th>
+                                <th class="py-3.5 px-4">Nama Perangkat</th>
+                                <th class="py-3.5 px-4">Kategori</th>
+                                <th class="py-3.5 px-4">Stok Tersedia</th>
+                                <th class="py-3.5 px-4">Kondisi</th>
+                                <th class="py-3.5 px-4 text-right">Aksi CRUD</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-inventory-tbody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-slate-200/80 py-4 px-4 text-center text-xs text-slate-500 mt-auto">
+            &copy; 2026 SIM-LABKOM — Sistem Informasi Inventaris & Peminjaman Laboratorium Komputer.
+        </footer>
+    </div>
+
+    <!-- ==================== MODAL CRUD INVENTARIS (ADMIN) ==================== -->
+    <div id="modal-inventory" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden">
+            <div class="bg-indigo-950 px-6 py-4 text-white flex items-center justify-between">
+                <h3 id="modal-inv-title" class="font-bold text-base">Tambah Inventaris Alat Baru</h3>
+                <button onclick="closeInventoryModal()" class="text-indigo-200 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="form-inventory" onsubmit="saveInventory(event)" class="p-6 space-y-4">
+                <input type="hidden" id="inv-id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kode Alat *</label>
+                        <input type="text" id="inv-code" required placeholder="LAB-PC-01" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori *</label>
+                        <select id="inv-category" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                            <option value="PC / Laptop">PC / Laptop</option>
+                            <option value="Jaringan">Jaringan</option>
+                            <option value="Periferal">Periferal</option>
+                            <option value="Multimedia">Multimedia</option>
+                            <option value="IoT / Mikrokontroler">IoT / Mikrokontroler</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Alat / Spesifikasi Singkat *</label>
+                    <input type="text" id="inv-name" required placeholder="Contoh: Laptop Asus ROG Strix G15" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Stok Tersedia *</label>
+                        <input type="number" id="inv-stock" min="0" required placeholder="0" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kondisi Perangkat *</label>
+                        <select id="inv-condition" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                            <option value="Baik">Baik</option>
+                            <option value="Rusak Ringan">Rusak Ringan</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-3 flex justify-end gap-2.5 border-t border-slate-100">
+                    <button type="button" onclick="closeInventoryModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-900 hover:bg-indigo-800 shadow-sm transition">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL CRUD PEMINJAMAN (ADMIN) ==================== -->
+    <div id="modal-loan" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden max-h-[92vh] flex flex-col">
+            <div class="bg-indigo-950 px-6 py-4 text-white flex items-center justify-between shrink-0">
+                <h3 id="modal-loan-title" class="font-bold text-base">Tambah Data Peminjaman</h3>
+                <button onclick="closeLoanModal()" class="text-indigo-200 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="form-admin-loan" onsubmit="saveAdminLoan(event)" class="p-6 space-y-4 overflow-y-auto">
+                <input type="hidden" id="admin-loan-id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Peminjam *</label>
+                        <input type="text" id="admin-loan-nama" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">NIS / NIP *</label>
+                        <input type="text" id="admin-loan-nim" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Program Studi *</label>
+                        <input type="text" id="admin-loan-prodi" required placeholder="Contoh: Teknik Komputer Jaringan dan Telekomunikasi" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">No. WhatsApp *</label>
+                        <input type="text" id="admin-loan-wa" required placeholder="0812..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Alat Inventaris *</label>
+                        <select id="admin-loan-item" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah *</label>
+                        <input type="number" id="admin-loan-qty" min="1" value="1" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Pinjam *</label>
+                        <input type="date" id="admin-loan-start" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Kembali *</label>
+                        <input type="date" id="admin-loan-end" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Status Transaksi *</label>
+                    <select id="admin-loan-status" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                        <option value="Menunggu Persetujuan">Menunggu Persetujuan</option>
+                        <option value="Disetujui">Disetujui (Stok Berkurang)</option>
+                        <option value="Dikembalikan">Dikembalikan</option>
+                        <option value="Ditolak">Ditolak</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Keperluan *</label>
+                    <input type="text" id="admin-loan-purpose" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
+                </div>
+                <div class="pt-3 flex justify-end gap-2.5 border-t border-slate-100">
+                    <button type="button" onclick="closeLoanModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-900 hover:bg-indigo-800 shadow-sm transition">Simpan Transaksi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        // Storage Keys
+        const STORAGE_KEY_INV = 'simlabkom_inventory_v1';
+        const STORAGE_KEY_LOANS = 'simlabkom_loans_v1';
+        const STORAGE_KEY_SESSION = 'simlabkom_session_v1';
+
+        // Initial Seed Data
+        const DEFAULT_INVENTORY = [
+            { id: 'INV-001', code: 'LPT-ROG-01', name: 'Laptop Asus ROG Strix G15 (Core i7, RAM 16GB)', category: 'PC / Laptop', stock: 5, condition: 'Baik' },
+            { id: 'INV-002', code: 'NET-CSC-02', name: 'Router Cisco ISR 4321 Gigabit', category: 'Jaringan', stock: 4, condition: 'Baik' },
+            { id: 'INV-003', code: 'MM-EPS-03', name: 'Proyektor Epson EB-X500 XGA', category: 'Multimedia', stock: 3, condition: 'Baik' },
+            { id: 'INV-004', code: 'NET-CRM-04', name: 'Crimping Tool Kit RJ45 + LAN Cable Tester', category: 'Jaringan', stock: 12, condition: 'Baik' },
+            { id: 'INV-005', code: 'IOT-ARD-05', name: 'Arduino Uno R3 Starter Kit Sensor Lengkap', category: 'IoT / Mikrokontroler', stock: 8, condition: 'Baik' },
+            { id: 'INV-006', code: 'PER-WAC-06', name: 'Wacom Intuos Pen Tablet Medium', category: 'Periferal', stock: 2, condition: 'Rusak Ringan' }
+        ];
+
+        const DEFAULT_LOANS = [
+            {
+                id: 'TRX-202601',
+                nim: '221402088',
+                nama: 'Budi Santoso',
+                prodi: 'Teknik Komputer Jaringan dan Telekomunikasi',
+                wa: '081265432190',
+                itemId: 'INV-002',
+                itemName: 'Router Cisco ISR 4321 Gigabit',
+                qty: 1,
+                startDate: '2026-11-12',
+                endDate: '2026-11-15',
+                purpose: 'Praktikum Routing & Switching Lanjut',
+                status: 'Disetujui'
+            },
+            {
+                id: 'TRX-202602',
+                nim: '221402088',
+                nama: 'Angga Pratama',
+                prodi: 'Pengembangan Perangkat Lunak dan Gim',
+                wa: '081265432190',
+                itemId: 'INV-005',
+                itemName: 'Arduino Uno R3 Starter Kit Sensor Lengkap',
+                qty: 2,
+                startDate: '2026-11-13',
+                endDate: '2026-11-18',
+                purpose: 'Pengembangan Prototipe Tugas Akhir IoT',
+                status: 'Menunggu Persetujuan'
+            },
+            {
+                id: 'TRX-202603',
+                nim: '211401045',
+                nama: 'Siti Rahmawati',
+                prodi: 'Teknik Komputer Jaringan dan Telekomunikasi',
+                wa: '085277889900',
+                itemId: 'INV-001',
+                itemName: 'Laptop Asus ROG Strix G15 (Core i7, RAM 16GB)',
+                qty: 1,
+                startDate: '2026-11-10',
+                endDate: '2026-11-12',
+                purpose: 'Pelatihan Machine Learning & Computer Vision',
+                status: 'Dikembalikan'
+            }
+        ];
+
+        // Global State
+        let inventory = [];
+        let loans = [];
+        let currentSession = null;
+
+        // Initialize App on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadDataFromStorage();
+            setDefaultDates();
+            checkSession();
+            lucide.createIcons();
+        });
+
+        // ==================== STORAGE MANAGEMENT ====================
+        function loadDataFromStorage() {
+            const savedInv = localStorage.getItem(STORAGE_KEY_INV);
+            const savedLoans = localStorage.getItem(STORAGE_KEY_LOANS);
+            const savedSession = localStorage.getItem(STORAGE_KEY_SESSION);
+
+            if (savedInv) {
+                inventory = JSON.parse(savedInv);
+            } else {
+                inventory = JSON.parse(JSON.stringify(DEFAULT_INVENTORY));
+                saveInventoryStorage();
+            }
+
+            if (savedLoans) {
+                loans = JSON.parse(savedLoans);
+            } else {
+                loans = JSON.parse(JSON.stringify(DEFAULT_LOANS));
+                saveLoansStorage();
+            }
+
+            if (savedSession) {
+                currentSession = JSON.parse(savedSession);
+            }
+        }
+
+        function saveInventoryStorage() {
+            localStorage.setItem(STORAGE_KEY_INV, JSON.stringify(inventory));
+        }
+
+        function saveLoansStorage() {
+            localStorage.setItem(STORAGE_KEY_LOANS, JSON.stringify(loans));
+        }
+
+        function confirmResetDemo() {
+            showConfirm(
+                'Reset Data Demo?',
+                'Seluruh data inventaris dan transaksi peminjaman akan dikembalikan ke data contoh awal. Lanjutkan?',
+                () => {
+                    inventory = JSON.parse(JSON.stringify(DEFAULT_INVENTORY));
+                    loans = JSON.parse(JSON.stringify(DEFAULT_LOANS));
+                    saveInventoryStorage();
+                    saveLoansStorage();
+                    refreshActiveView();
+                    showToast('Data demo berhasil di-reset ke pengaturan awal.', 'success');
+                }
+            );
+        }
+
+        // ==================== TOAST & CONFIRMATION MODAL ====================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const styles = {
+                success: 'bg-emerald-600 text-white border-emerald-500',
+                error: 'bg-rose-600 text-white border-rose-500',
+                warning: 'bg-amber-500 text-white border-amber-400',
+                info: 'bg-indigo-900 text-white border-indigo-700'
+            };
+
+            const icons = {
+                success: 'check-circle',
+                error: 'x-circle',
+                warning: 'alert-circle',
+                info: 'info'
+            };
+
+            toast.className = `toast-enter pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium ${styles[type] || styles.info}`;
+            toast.innerHTML = `
+                <i data-lucide="${icons[type] || 'info'}" class="w-5 h-5 shrink-0"></i>
+                <span class="flex-1 leading-snug">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function showConfirm(title, message, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            
+            const okBtn = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            cancelBtn.onclick = cleanup;
+            okBtn.onclick = () => {
+                cleanup();
+                onConfirm();
+            };
+        }
+
+        // ==================== LOGIN & SESSION LOGIC ====================
+        function switchLoginTab(role) {
+            const btnUser = document.getElementById('tab-btn-user');
+            const btnAdmin = document.getElementById('tab-btn-admin');
+            const formUser = document.getElementById('form-login-user');
+            const formAdmin = document.getElementById('form-login-admin');
+
+            if (role === 'user') {
+                btnUser.className = 'flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold bg-white text-indigo-900 shadow-sm transition';
+                btnAdmin.className = 'flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 transition';
+                formUser.classList.remove('hidden');
+                formAdmin.classList.add('hidden');
+            } else {
+                btnAdmin.className = 'flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold bg-white text-indigo-900 shadow-sm transition';
+                btnUser.className = 'flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 transition';
+                formAdmin.classList.remove('hidden');
+                formUser.classList.add('hidden');
+            }
+        }
+
+        function autofillDemo(role) {
+            switchLoginTab(role);
+            if (role === 'user') {
+                document.getElementById('login-user-nim').value = '221402088';
+                document.getElementById('login-user-name').value = 'Budi Santoso';
+                document.getElementById('login-user-pass').value = 'sisw123';
+                showToast('Kredensial demo Siswa diisi otomatis.', 'info');
+            } else {
+                document.getElementById('login-admin-user').value = 'admin';
+                document.getElementById('login-admin-pass').value = 'admin123';
+                showToast('Kredensial demo Admin Laboran diisi otomatis.', 'info');
+            }
+        }
+
+        function handleUserLogin(e) {
+            e.preventDefault();
+            const nim = document.getElementById('login-user-nim').value.trim();
+            const name = document.getElementById('login-user-name').value.trim();
+            const pass = document.getElementById('login-user-pass').value.trim();
+
+            if (pass.length < 4) {
+                showToast('Kata sandi minimal 4 karakter.', 'error');
+                return;
+            }
+
+            currentSession = { role: 'user', nim, name };
+            localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(currentSession));
+            showToast(`Selamat datang, ${name}!`, 'success');
+            checkSession();
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('login-admin-user').value.trim();
+            const pass = document.getElementById('login-admin-pass').value.trim();
+
+            if (user === 'admin' && pass === 'admin123') {
+                currentSession = { role: 'admin', nim: 'ADMIN-LAB', name: 'Laboran Utama' };
+                localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(currentSession));
+                showToast('Login Admin berhasil! Mengalihkan ke Dashboard Pengelola.', 'success');
+                checkSession();
+            } else {
+                showToast('Username atau Password Admin salah! (Gunakan: admin / admin123)', 'error');
+            }
+        }
+
+        function handleLogout() {
+            currentSession = null;
+            localStorage.removeItem(STORAGE_KEY_SESSION);
+            document.getElementById('app-shell').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('flex');
+            document.getElementById('login-view').classList.remove('hidden');
+            showToast('Anda telah keluar dari sistem.', 'info');
+        }
+
+        function checkSession() {
+            const loginView = document.getElementById('login-view');
+            const appShell = document.getElementById('app-shell');
+            const userView = document.getElementById('user-dashboard-view');
+            const adminView = document.getElementById('admin-dashboard-view');
+
+            if (!currentSession) {
+                loginView.classList.remove('hidden');
+                appShell.classList.add('hidden');
+                appShell.classList.remove('flex');
+                return;
+            }
+
+            loginView.classList.add('hidden');
+            appShell.classList.remove('hidden');
+            appShell.classList.add('flex');
+
+            // Update Navbar Info
+            document.getElementById('nav-username').textContent = currentSession.name;
+            document.getElementById('nav-userid').textContent = currentSession.nim;
+            document.getElementById('nav-avatar').textContent = currentSession.name.charAt(0).toUpperCase();
+
+            if (currentSession.role === 'user') {
+                document.getElementById('nav-role-badge').textContent = 'Portal Peminjaman (User)';
+                adminView.classList.add('hidden');
+                userView.classList.remove('hidden');
+                initUserDashboard();
+            } else {
+                document.getElementById('nav-role-badge').textContent = 'Panel Administrator Laboran';
+                userView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                initAdminDashboard();
+            }
+            lucide.createIcons();
+        }
+
+        function refreshActiveView() {
+            if (!currentSession) return;
+            if (currentSession.role === 'user') {
+                initUserDashboard();
+            } else {
+                initAdminDashboard();
+            }
+            lucide.createIcons();
+        }
+
+        function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0];
+            const nextThreeDays = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+            
+            const startInput = document.getElementById('loan-date-start');
+            const endInput = document.getElementById('loan-date-end');
+            if (startInput && endInput) {
+                startInput.value = today;
+                startInput.min = today;
+                endInput.value = nextThreeDays;
+                endInput.min = today;
+            }
+        }
+
+        // ==================== ROLE USER LOGIC ====================
+        function initUserDashboard() {
+            document.getElementById('user-welcome-name').textContent = currentSession.name;
+            document.getElementById('loan-nama').value = currentSession.name;
+            document.getElementById('loan-nim').value = currentSession.nim;
+
+            populateUserItemDropdown();
+            renderUserCatalogPreview();
+            renderUserLoansTable();
+        }
+
+        function populateUserItemDropdown() {
+            const select = document.getElementById('loan-item-select');
+            const availableItems = inventory.filter(item => item.stock > 0);
+            
+            select.innerHTML = '<option value="">-- Pilih Perangkat Lab (Tersedia) --</option>';
+            availableItems.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = `${item.name} (Sisa Stok: ${item.stock} unit)`;
+                select.appendChild(opt);
+            });
+            updateMaxQtyHint();
+        }
+
+        function updateMaxQtyHint() {
+            const itemId = document.getElementById('loan-item-select').value;
+            const qtyInput = document.getElementById('loan-qty');
+            const hint = document.getElementById('loan-stock-hint');
+
+            const item = inventory.find(i => i.id === itemId);
+            if (item) {
+                qtyInput.max = item.stock;
+                if (parseInt(qtyInput.value) > item.stock) qtyInput.value = item.stock;
+                hint.textContent = `Maksimal peminjaman untuk alat ini: ${item.stock} unit (Kondisi: ${item.condition}).`;
+            } else {
+                qtyInput.removeAttribute('max');
+                hint.textContent = 'Pilih alat untuk melihat ketersediaan stok.';
+            }
+        }
+
+        function renderUserCatalogPreview() {
+            const container = document.getElementById('user-catalog-preview');
+            container.innerHTML = inventory.map(item => {
+                const isAvailable = item.stock > 0;
+                return `
+                    <div class="p-3 rounded-xl border ${isAvailable ? 'border-slate-200 bg-slate-50/50' : 'border-rose-100 bg-rose-50/30 opacity-75'} flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600">${item.code} • ${item.category}</span>
+                            <p class="text-xs font-semibold text-slate-800 truncate" title="${item.name}">${item.name}</p>
+                        </div>
+                        <span class="shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold ${isAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-700'}">
+                            ${isAvailable ? item.stock + ' Unit' : 'Habis'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function submitUserLoan(e) {
+            e.preventDefault();
+            const nama = document.getElementById('loan-nama').value.trim();
+            const nim = document.getElementById('loan-nim').value.trim();
+            const wa = document.getElementById('loan-wa').value.trim();
+            const prodi = document.getElementById('loan-prodi').value;
+            const itemId = document.getElementById('loan-item-select').value;
+            const qty = parseInt(document.getElementById('loan-qty').value);
+            const startDate = document.getElementById('loan-date-start').value;
+            const endDate = document.getElementById('loan-date-end').value;
+            const purpose = document.getElementById('loan-purpose').value.trim();
+
+            const item = inventory.find(i => i.id === itemId);
+            if (!item) {
+                showToast('Silakan pilih alat inventaris terlebih dahulu.', 'error');
+                return;
+            }
+            if (qty < 1 || qty > item.stock) {
+                showToast(`Jumlah pinjam tidak valid. Maksimal stok tersedia: ${item.stock} unit.`, 'error');
+                return;
+            }
+            if (endDate < startDate) {
+                showToast('Tanggal rencana kembali tidak boleh lebih awal dari tanggal pinjam.', 'error');
+                return;
+            }
+
+            const newLoan = {
+                id: 'TRX-' + Math.floor(100000 + Math.random() * 900000),
+                nis,
+                nama,
+                prodi,
+                wa,
+                itemId: item.id,
+                itemName: item.name,
+                qty,
+                startDate,
+                endDate,
+                purpose,
+                status: 'Menunggu Persetujuan'
+            };
+
+            loans.unshift(newLoan);
+            saveLoansStorage();
+
+            // Reset partial form
+            document.getElementById('loan-item-select').value = '';
+            document.getElementById('loan-qty').value = 1;
+            document.getElementById('loan-purpose').value = '';
+            updateMaxQtyHint();
+
+            renderUserLoansTable();
+            showToast('Pengajuan peminjaman berhasil dikirim! Menunggu verifikasi Admin Laboran.', 'success');
+        }
+
+        function renderUserLoansTable() {
+            const tbody = document.getElementById('user-loans-tbody');
+            const userLoans = loans.filter(l => l.nim === currentSession.nim);
+            document.getElementById('user-total-loans-count').textContent = `${userLoans.length} Transaksi`;
+
+            if (userLoans.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-10 text-center text-slate-400 text-sm">
+                            Belum ada riwayat pengajuan peminjaman untuk NIM/NIP <strong>${currentSession.nim}</strong>.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = userLoans.map(l => `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-3.5 px-4">
+                        <span class="text-[11px] font-bold text-indigo-600 block">${l.id}</span>
+                        <span class="font-semibold text-slate-800 text-xs sm:text-sm">${l.itemName}</span>
+                    </td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-700">${l.qty} Unit</td>
+                    <td class="py-3.5 px-4 text-xs text-slate-600">
+                        <div>Pinjam: <span class="font-medium">${l.startDate}</span></div>
+                        <div>Kembali: <span class="font-medium">${l.endDate}</span></div>
+                    </td>
+                    <td class="py-3.5 px-4 text-xs text-slate-600 max-w-[180px] truncate" title="${l.purpose}">${l.purpose}</td>
+                    <td class="py-3.5 px-4">${getStatusBadge(l.status)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ==================== ROLE ADMIN LOGIC ====================
+        function initAdminDashboard() {
+            updateAdminStats();
+            renderAdminLoans();
+            renderAdminInventory();
+        }
+
+        function switchAdminTab(tab) {
+            const tabLoans = document.getElementById('admin-tab-loans');
+            const tabInv = document.getElementById('admin-tab-inventory');
+            const secLoans = document.getElementById('admin-section-loans');
+            const secInv = document.getElementById('admin-section-inventory');
+
+            if (tab === 'loans') {
+                tabLoans.className = 'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-white text-indigo-950 shadow-sm transition';
+                tabInv.className = 'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 transition';
+                secLoans.classList.remove('hidden');
+                secInv.classList.add('hidden');
+            } else {
+                tabInv.className = 'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-white text-indigo-950 shadow-sm transition';
+                tabLoans.className = 'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 transition';
+                secInv.classList.remove('hidden');
+                secLoans.classList.add('hidden');
+            }
+        }
+
+        function updateAdminStats() {
+            const totalTypes = inventory.length;
+            const totalUnits = inventory.reduce((sum, item) => sum + Number(item.stock), 0);
+            const activeLoans = loans.filter(l => l.status === 'Disetujui').reduce((sum, l) => sum + Number(l.qty), 0);
+            const pendingLoans = loans.filter(l => l.status === 'Menunggu Persetujuan').length;
+
+            document.getElementById('stat-total-types').textContent = totalTypes;
+            document.getElementById('stat-total-units').textContent = totalUnits;
+            document.getElementById('stat-active-loans').textContent = `${activeLoans} Unit`;
+            document.getElementById('stat-pending-loans').textContent = pendingLoans;
+
+            const badge = document.getElementById('badge-pending-count');
+            if (pendingLoans > 0) {
+                badge.textContent = pendingLoans;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // --- Admin Inventory CRUD ---
+        function renderAdminInventory() {
+            const tbody = document.getElementById('admin-inventory-tbody');
+            const keyword = document.getElementById('admin-search-inv').value.toLowerCase();
+            const catFilter = document.getElementById('admin-filter-inv-cat').value;
+
+            const filtered = inventory.filter(item => {
+                const matchText = item.name.toLowerCase().includes(keyword) || 
+                                  item.code.toLowerCase().includes(keyword) || 
+                                  item.category.toLowerCase().includes(keyword);
+                const matchCat = catFilter === 'ALL' || item.category === catFilter;
+                return matchText && matchCat;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-slate-400">Tidak ada data alat inventaris yang sesuai pencarian.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-3.5 px-4 font-mono text-xs font-bold text-indigo-700">${item.code}</td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-800">${item.name}</td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium">${item.category}</span>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <span class="font-bold ${item.stock > 0 ? 'text-emerald-700' : 'text-rose-600'}">${item.stock} Unit</span>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-semibold ${item.condition === 'Baik' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+                            ${item.condition}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                        <div class="inline-flex items-center gap-1.5">
+                            <button onclick="openInventoryModal('${item.id}')" title="Edit Alat" class="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 transition">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteInventory('${item.id}')" title="Hapus Alat" class="p-2 rounded-lg text-rose-600 hover:bg-rose-50 transition">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function openInventoryModal(id = null) {
+            const modal = document.getElementById('modal-inventory');
+            const title = document.getElementById('modal-inv-title');
+            const form = document.getElementById('form-inventory');
+            form.reset();
+
+            if (id) {
+                const item = inventory.find(i => i.id === id);
+                if (!item) return;
+                title.textContent = 'Edit Data Inventaris Alat';
+                document.getElementById('inv-id').value = item.id;
+                document.getElementById('inv-code').value = item.code;
+                document.getElementById('inv-category').value = item.category;
+                document.getElementById('inv-name').value = item.name;
+                document.getElementById('inv-stock').value = item.stock;
+                document.getElementById('inv-condition').value = item.condition;
+            } else {
+                title.textContent = 'Tambah Inventaris Alat Baru';
+                document.getElementById('inv-id').value = '';
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeInventoryModal() {
+            const modal = document.getElementById('modal-inventory');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveInventory(e) {
+            e.preventDefault();
+            const id = document.getElementById('inv-id').value;
+            const code = document.getElementById('inv-code').value.trim().toUpperCase();
+            const category = document.getElementById('inv-category').value;
+            const name = document.getElementById('inv-name').value.trim();
+            const stock = parseInt(document.getElementById('inv-stock').value);
+            const condition = document.getElementById('inv-condition').value;
+
+            if (id) {
+                const idx = inventory.findIndex(i => i.id === id);
+                if (idx !== -1) {
+                    inventory[idx] = { ...inventory[idx], code, category, name, stock, condition };
+                    showToast('Data inventaris berhasil diperbarui.', 'success');
+                }
+            } else {
+                const newItem = {
+                    id: 'INV-' + Date.now().toString().slice(-4),
+                    code,
+                    category,
+                    name,
+                    stock,
+                    condition
+                };
+                inventory.unshift(newItem);
+                showToast('Alat baru berhasil ditambahkan ke inventaris.', 'success');
+            }
+
+            saveInventoryStorage();
+            closeInventoryModal();
+            initAdminDashboard();
+        }
+
+        function deleteInventory(id) {
+            const item = inventory.find(i => i.id === id);
+            if (!item) return;
+
+            showConfirm(
+                'Hapus Data Alat?',
+                `Anda yakin ingin menghapus "${item.name}" (${item.code}) dari master inventaris?`,
+                () => {
+                    inventory = inventory.filter(i => i.id !== id);
+                    saveInventoryStorage();
+                    initAdminDashboard();
+                    showToast('Data alat berhasil dihapus.', 'success');
+                }
+            );
+        }
+
+        // --- Admin Loans CRUD & Approval ---
+        function renderAdminLoans() {
+            const tbody = document.getElementById('admin-loans-tbody');
+            const keyword = document.getElementById('admin-search-loans').value.toLowerCase();
+            const statusFilter = document.getElementById('admin-filter-loan-status').value;
+
+            const filtered = loans.filter(l => {
+                const matchText = l.nama.toLowerCase().includes(keyword) || 
+                                  l.nim.toLowerCase().includes(keyword) || 
+                                  l.itemName.toLowerCase().includes(keyword) ||
+                                  l.id.toLowerCase().includes(keyword);
+                const matchStatus = statusFilter === 'ALL' || l.status === statusFilter;
+                return matchText && matchStatus;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-slate-400">Tidak ada transaksi peminjaman yang ditemukan.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(l => {
+                // Action Buttons based on Status
+                let approvalButtons = '';
+                if (l.status === 'Menunggu Persetujuan') {
+                    approvalButtons = `
+                        <button onclick="changeLoanStatus('${l.id}', 'Disetujui')" title="Setujui Peminjaman" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">
+                            Setujui
+                        </button>
+                        <button onclick="changeLoanStatus('${l.id}', 'Ditolak')" title="Tolak Peminjaman" class="px-2.5 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-semibold transition">
+                            Tolak
+                        </button>
+                    `;
+                } else if (l.status === 'Disetujui') {
+                    approvalButtons = `
+                        <button onclick="changeLoanStatus('${l.id}', 'Dikembalikan')" title="Tandai Sudah Dikembalikan" class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition">
+                            Selesai / Kembali
+                        </button>
+                    `;
+                }
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3.5 px-4">
+                            <span class="font-mono text-xs font-bold text-indigo-700 block">${l.id}</span>
+                            <span class="text-[11px] text-slate-500">${l.startDate}</span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <div class="font-semibold text-slate-900">${l.nama}</div>
+                            <div class="text-xs text-slate-500">${l.nim} • ${l.prodi}</div>
+                            <div class="text-[11px] text-emerald-700 font-medium">WA: ${l.wa}</div>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <div class="font-semibold text-slate-800 text-xs sm:text-sm">${l.itemName}</div>
+                            <span class="inline-block mt-0.5 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-bold">${l.qty} Unit</span>
+                        </td>
+                        <td class="py-3.5 px-4 text-xs text-slate-600">
+                            <div><span class="font-medium">${l.startDate}</span> s/d <span class="font-medium">${l.endDate}</span></div>
+                            <div class="text-slate-500 italic mt-0.5 max-w-[200px] truncate" title="${l.purpose}">"${l.purpose}"</div>
+                        </td>
+                        <td class="py-3.5 px-4">${getStatusBadge(l.status)}</td>
+                        <td class="py-3.5 px-4 text-right">
+                            <div class="inline-flex flex-wrap items-center justify-end gap-1.5">
+                                ${approvalButtons}
+                                <button onclick="openLoanModal('${l.id}')" title="Edit Transaksi" class="p-1.5 rounded-lg text-slate-600 hover:bg-slate-200/70 transition">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteLoan('${l.id}')" title="Hapus Transaksi" class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function changeLoanStatus(loanId, newStatus) {
+            const loan = loans.find(l => l.id === loanId);
+            if (!loan) return;
+
+            const item = inventory.find(i => i.id === loan.itemId);
+
+            // Stock Synchronization Logic
+            if (newStatus === 'Disetujui' && loan.status !== 'Disetujui') {
+                if (!item || item.stock < loan.qty) {
+                    showToast(`Stok "${loan.itemName}" tidak mencukupi untuk disetujui!`, 'error');
+                    return;
+                }
+                item.stock -= loan.qty;
+                saveInventoryStorage();
+                showToast(`Peminjaman disetujui! Stok ${item.name} berkurang ${loan.qty} unit.`, 'success');
+            } else if (newStatus === 'Dikembalikan' && loan.status === 'Disetujui') {
+                if (item) {
+                    item.stock += loan.qty;
+                    saveInventoryStorage();
+                }
+                showToast(`Alat telah dikembalikan! Stok ${loan.itemName} bertambah ${loan.qty} unit.`, 'success');
+            } else if (newStatus === 'Ditolak') {
+                showToast(`Pengajuan peminjaman ${loan.id} telah ditolak.`, 'warning');
+            }
+
+            loan.status = newStatus;
+            saveLoansStorage();
+            initAdminDashboard();
+        }
+
+        function openLoanModal(loanId = null) {
+            const modal = document.getElementById('modal-loan');
+            const title = document.getElementById('modal-loan-title');
+            const form = document.getElementById('form-admin-loan');
+            const itemSelect = document.getElementById('admin-loan-item');
+
+            // Populate all items
+            itemSelect.innerHTML = inventory.map(i => `<option value="${i.id}">${i.name} (Stok: ${i.stock})</option>`).join('');
+            form.reset();
+
+            if (loanId) {
+                const loan = loans.find(l => l.id === loanId);
+                if (!loan) return;
+                title.textContent = `Edit Transaksi (${loan.id})`;
+                document.getElementById('admin-loan-id').value = loan.id;
+                document.getElementById('admin-loan-nama').value = loan.nama;
+                document.getElementById('admin-loan-nis').value = loan.nis;
+                document.getElementById('admin-loan-prodi').value = loan.prodi;
+                document.getElementById('admin-loan-wa').value = loan.wa;
+                document.getElementById('admin-loan-item').value = loan.itemId;
+                document.getElementById('admin-loan-qty').value = loan.qty;
+                document.getElementById('admin-loan-start').value = loan.startDate;
+                document.getElementById('admin-loan-end').value = loan.endDate;
+                document.getElementById('admin-loan-status').value = loan.status;
+                document.getElementById('admin-loan-purpose').value = loan.purpose;
+            } else {
+                title.textContent = 'Tambah Peminjaman Manual (Admin)';
+                document.getElementById('admin-loan-id').value = '';
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('admin-loan-start').value = today;
+                document.getElementById('admin-loan-end').value = today;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeLoanModal() {
+            const modal = document.getElementById('modal-loan');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveAdminLoan(e) {
+            e.preventDefault();
+            const id = document.getElementById('admin-loan-id').value;
+            const nama = document.getElementById('admin-loan-nama').value.trim();
+            const nis = document.getElementById('admin-loan-nis').value.trim();
+            const prodi = document.getElementById('admin-loan-prodi').value.trim();
+            const wa = document.getElementById('admin-loan-wa').value.trim();
+            const itemId = document.getElementById('admin-loan-item').value;
+            const qty = parseInt(document.getElementById('admin-loan-qty').value);
+            const startDate = document.getElementById('admin-loan-start').value;
+            const endDate = document.getElementById('admin-loan-end').value;
+            const status = document.getElementById('admin-loan-status').value;
+            const purpose = document.getElementById('admin-loan-purpose').value.trim();
+
+            const item = inventory.find(i => i.id === itemId);
+            const itemName = item ? item.name : 'Perangkat Lab';
+
+            if (id) {
+                const idx = loans.findIndex(l => l.id === id);
+                if (idx !== -1) {
+                    const oldLoan = loans[idx];
+                    // Adjust stock if status transitions between Disetujui and non-Disetujui
+                    if (oldLoan.status !== 'Disetujui' && status === 'Disetujui' && item) {
+                        if (item.stock < qty) {
+                            showToast('Stok tidak mencukupi untuk status Disetujui!', 'error');
+                            return;
+                        }
+                        item.stock -= qty;
+                    } else if (oldLoan.status === 'Disetujui' && status !== 'Disetujui' && item) {
+                        item.stock += oldLoan.qty;
+                    }
+                    loans[idx] = { ...oldLoan, nama, nis, prodi, wa, itemId, itemName, qty, startDate, endDate, status, purpose };
+                    showToast('Data peminjaman berhasil diperbarui.', 'success');
+                }
+            } else {
+                if (status === 'Disetujui' && item) {
+                    if (item.stock < qty) {
+                        showToast('Stok alat tidak mencukupi!', 'error');
+                        return;
+                    }
+                    item.stock -= qty;
+                }
+                loans.unshift({
+                    id: 'TRX-' + Math.floor(100000 + Math.random() * 900000),
+                    nama, nis, prodi, wa, itemId, itemName, qty, startDate, endDate, status, purpose
+                });
+                showToast('Transaksi peminjaman baru berhasil ditambahkan.', 'success');
+            }
+
+            saveInventoryStorage();
+            saveLoansStorage();
+            closeLoanModal();
+            initAdminDashboard();
+        }
+
+        function deleteLoan(id) {
+            const loan = loans.find(l => l.id === id);
+            if (!loan) return;
+
+            showConfirm(
+                'Hapus Transaksi Peminjaman?',
+                `Hapus riwayat peminjaman ${loan.id} atas nama ${loan.nama}?`,
+                () => {
+                    // Restore stock if active loan is deleted
+                    if (loan.status === 'Disetujui') {
+                        const item = inventory.find(i => i.id === loan.itemId);
+                        if (item) {
+                            item.stock += loan.qty;
+                            saveInventoryStorage();
+                        }
+                    }
+                    loans = loans.filter(l => l.id !== id);
+                    saveLoansStorage();
+                    initAdminDashboard();
+                    showToast('Data peminjaman berhasil dihapus.', 'success');
+                }
+            );
+        }
+
+        // ==================== HELPER BADGES ====================
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'Menunggu Persetujuan':
+                    return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Menunggu</span>`;
+                case 'Disetujui':
+                    return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200"><span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>Dipinjam</span>`;
+                case 'Dikembalikan':
+                    return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Dikembalikan</span>`;
+                case 'Ditolak':
+                    return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>Ditolak</span>`;
+                default:
+                    return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">${status}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
